@@ -1,4 +1,4 @@
-var superagent = require('superagent');
+var request = require('superagent');
 var Promise = require('bluebird');
 
 
@@ -6,16 +6,15 @@ function TempMailbox() {
 	var init = Promise.defer();
 	var first_fetch = Promise.defer();
 	var me = this;
-	
-	this.agent = superagent();
+
 	this.sequence = 0;
 	this.init_promise = init.promise;
 	this.messages = [];
 	this.fetch_outstanding = true;
 	this.current_fetch_promise = first_fetch.promise;
 	this.filter_welcome_email = true;
-	
-	this.agent
+
+	request
 		.get('http://api.guerrillamail.com/ajax.php')
 		.query({
 			f: 'get_email_address',
@@ -57,7 +56,7 @@ TempMailbox.prototype.checkMail = function() {
 	
 	var defer = Promise.defer();
 	
-	this.agent
+	request
 		.get('http://api.guerrillamail.com/ajax.php')
 		.query({
 			f: 'check_email',
@@ -100,7 +99,7 @@ TempMailbox.prototype.getNextMailSummary = function() {
 TempMailbox.prototype.getMailDetail = function(id) {
 	var defer = Promise.defer();
 	
-	this.agent
+	request
 		.get('http://api.guerrillamail.com/ajax.php')
 		.query({
 			f: 'fetch_email',
@@ -140,11 +139,11 @@ TempMailbox.prototype.waitForEmail = function(summaryFilter, iterationDelay) {
 TempMailbox.prototype.deleteMail = function(id) {
 	var defer = Promise.defer();
 	
-	this.agent
+	request
 		.get('http://api.guerrillamail.com/ajax.php')
 		.query({
 			f: 'del_email',
-			email_ids: id
+			email_ids: [ id ]
 		})
 		.end(function(err, res) {
 			if (err) { defer.reject("request failed"); return; }
@@ -156,17 +155,3 @@ TempMailbox.prototype.deleteMail = function(id) {
 };
 
 module.exports = TempMailbox;
-/*
-var mailbox = new TempMailbox();
-
-mailbox.getEmailAddress()
-	.then(function(addr) { console.log('email addr: ' + addr); })
-	.then(function() {
-		return mailbox.waitForEmail(function(m) {
-			return (m.mail_subject.indexOf('xyzzy') != -1);
-		});
-	})
-	.then(function(mail) {
-		console.log(mail.mail_body);
-	});
-	*/
